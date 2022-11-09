@@ -9,6 +9,7 @@ while True:
         
     # Check if libraries have been installed
     if not os.path.isdir('/workspace/stable-diffusion-webui/repositories'):
+        print('Downloading libraries...')
         os.system("python launch.py --exit")
         
     launch_string = "python webui.py --api --port 3000 --ckpt /workspace/stable-diffusion-webui/models/Stable-diffusion/v1-5-pruned-emaonly.ckpt --opt-split-attention --listen --xformers"
