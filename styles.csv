@@ -18,6 +18,11 @@ comic-art-collection,"Retro comic style artwork, highly detailed {prompt}, comic
 silhouette-wallpaper-collection,"Multiple layers of silhouette {prompt}, sharp edges, at sunset, with heavy fog in air, vector style, horizon silhouette Landscape wallpaper by Alena Aenami, firewatch game style, vector style background ",
 needle-felt-object-collection,"tiny cute 3D felt fiber {prompt}, made from Felt fibers, a 3D render, trending on cgsociety, rendered in maya, rendered in cinema4d, made of yarn, square image",
 cute-stuffed-animal-collection,"cute kawaii Squishy {prompt} plush toy, realistic texture, visible stitch line, soft smooth lighting, vibrant studio lighting, modular constructivism, physically based rendering, square image",
-pixel-art-concept,"{prompt}, in SKSKS art style",
 cal-art-concept,"{prompt}, in CALARTS art style",
-kurzgesagt-concept,"portrait of {prompt}, kurzgesagt! style",
+flat-design-concept,"((({prompt}))) in [[kurzgesagt]] style, highly detailed, 4k, [blurry]",
+3d-render-concept,"{prompt} in (redshift style), highly detailed, 3d model, 4k",
+paper-cutout-concept,"(PaperCut style) {prompt}",
+modern-3d-animation-concept,"modern disney style style {prompt}",
+cel-shaded-concept,"({prompt}) in borderlands style",
+16-bit-concept,"((({prompt}))) in pixelsprite style, highly detailed",
+anime-concept,"{prompt} in anime style"
