@@ -55,7 +55,7 @@
     "training_image_repeats_per_epoch": 1,
     "training_write_csv_every": 500,
     "training_xattention_optimizations": false,
-    "sd_model_checkpoint": "waifu-concept.ckpt [84692140]",
+    "sd_model_checkpoint": "cal-arts-concept.ckpt [64afe6d2]",
     "sd_checkpoint_cache": 10,
     "sd_vae": "auto",
     "sd_hypernetwork": "None",
