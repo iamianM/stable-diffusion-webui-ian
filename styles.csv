@@ -25,6 +25,4 @@ paper-cutout-concept,"(PaperCut style) {prompt}",
 modern-3d-animation-concept,"modern disney style style {prompt}",
 cel-shaded-concept,"({prompt}) in borderlands style",
 16-bit-concept,"((({prompt}))) in pixelsprite style, highly detailed",
-anime-concept,"{prompt} in anime style",
-hiroshige-artist,"({prompt}) by Hiroshige",frame,
-peter-max-artist,"({prompt}) by Peter Max",frame
+anime-concept,"{prompt} in anime style"
