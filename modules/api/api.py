@@ -2,9 +2,11 @@ import base64
 import io
 import time
 import uvicorn
+import os
+import uuid
 from threading import Lock
 from gradio.processing_utils import encode_pil_to_base64, decode_base64_to_file, decode_base64_to_image
-from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, BackgroundTasks
 import modules.shared as shared
 from modules.api.models import *
 from modules.processing import StableDiffusionProcessingTxt2Img, StableDiffusionProcessingImg2Img, process_images
@@ -46,6 +48,8 @@ class Api:
         self.queue_lock = queue_lock
         self.app.add_api_route("/sdapi/v1/txt2img", self.text2imgapi, methods=["POST"], response_model=TextToImageResponse)
         self.app.add_api_route("/sdapi/v1/img2img", self.img2imgapi, methods=["POST"], response_model=ImageToImageResponse)
+        self.app.add_api_route("/sdapi/v1/txt2imgLab", self.text2imgapiLab, methods=["POST"], response_model=TextToImageLabResponse)
+        self.app.add_api_route("/sdapi/v1/img2imgLab", self.img2imgapiLab, methods=["POST"], response_model=ImageToImageLabResponse)
         self.app.add_api_route("/sdapi/v1/extra-single-image", self.extras_single_image_api, methods=["POST"], response_model=ExtrasSingleImageResponse)
         self.app.add_api_route("/sdapi/v1/extra-batch-images", self.extras_batch_images_api, methods=["POST"], response_model=ExtrasBatchImagesResponse)
         self.app.add_api_route("/sdapi/v1/png-info", self.pnginfoapi, methods=["POST"], response_model=PNGInfoResponse)
@@ -64,7 +68,7 @@ class Api:
         self.app.add_api_route("/sdapi/v1/prompt-styles", self.get_promp_styles, methods=["GET"], response_model=List[PromptStyleItem])
         self.app.add_api_route("/sdapi/v1/artist-categories", self.get_artists_categories, methods=["GET"], response_model=List[str])
         self.app.add_api_route("/sdapi/v1/artists", self.get_artists, methods=["GET"], response_model=List[ArtistItem])
-
+    
     def text2imgapi(self, txt2imgreq: StableDiffusionTxt2ImgProcessingAPI):
         if "sd_model_checkpoint" in txt2imgreq.override_settings:
             self.set_sd_models(LoadModelRequest(name=txt2imgreq.override_settings['sd_model_checkpoint']))
@@ -84,16 +88,48 @@ class Api:
         p = StableDiffusionProcessingTxt2Img(**vars(populate))
         # Override object param
 
-        shared.state.begin()
-
         with self.queue_lock:
             processed = process_images(p)
-
-        shared.state.end()
 
         b64images = list(map(encode_pil_to_base64, processed.images))
 
         return TextToImageResponse(images=b64images, parameters=vars(txt2imgreq), info=processed.js())
+    
+    def text2imgapiLab(self, txt2imgreqLab: TextToImageLabRequest, background_tasks: BackgroundTasks):
+        txt2imgreq = StableDiffusionTxt2ImgProcessingAPI()
+        txt2imgreq.prompt = txt2imgreqLab.prompt
+        if txt2imgreqLab.style:
+            txt2imgreq.styles = [txt2imgreqLab.style]
+        else:
+            txt2imgreq.styles = []
+            
+        if "-concept" in txt2imgreqLab.style:
+            txt2imgreq.override_settings = {"sd_model_checkpoint": f"{txt2imgreqLab.style}.ckpt"}
+        else:
+            txt2imgreq.override_settings = {"sd_model_checkpoint": f"v1-5-pruned-emaonly.ckpt"}
+            
+        txt2imgreq.cfg_scale = 11
+        txt2imgreq.batch_size = 8
+        txt2imgreq.steps = 50
+        txt2imgreq.negative_prompt = ""
+        txt2imgreq.sampler_index = "Euler a"
+        
+        my_hash = str(uuid.uuid4())
+        
+        def temp():
+            images = self.text2imgapi(txt2imgreq)
+
+            if not os.path.exists(f'outputs/api_imgs/'):
+                os.makedirs(f'outputs/api_imgs/')
+                
+            with open(f'outputs/api_imgs/{my_hash}.txt', "w") as fp:
+                fp.write('\n'.join(images.images))
+                
+            shared.state.end()
+
+        shared.state.begin(job_name=my_hash)
+        background_tasks.add_task(temp)
+        return TextToImageLabResponse(job_hash=my_hash, job_no=shared.state.job_no, job_count=shared.state.job_count)
 
     def img2imgapi(self, img2imgreq: StableDiffusionImg2ImgProcessingAPI):
         if "sd_model_checkpoint" in img2imgreq.override_settings:
@@ -131,12 +167,8 @@ class Api:
 
         p.init_images = imgs
 
-        shared.state.begin()
-
         with self.queue_lock:
             processed = process_images(p)
-
-        shared.state.end()
 
         b64images = list(map(encode_pil_to_base64, processed.images))
 
@@ -145,6 +177,46 @@ class Api:
             img2imgreq.mask = None
 
         return ImageToImageResponse(images=b64images, parameters=vars(img2imgreq), info=processed.js())
+    
+    def img2imgapiLab(self, img2imgreqLab: ImageToImageLabRequest, background_tasks: BackgroundTasks):
+        img2imgreq = StableDiffusionImg2ImgProcessingAPI()
+        img2imgreq.prompt = img2imgreqLab.prompt
+        if img2imgreqLab.style:
+            img2imgreq.styles = [img2imgreqLab.style]
+        else:
+            img2imgreq.styles = []
+            
+        if "-concept" in img2imgreqLab.style:
+            img2imgreq.override_settings = {"sd_model_checkpoint": f"{img2imgreqLab.style}.ckpt"}
+        else:
+            img2imgreq.override_settings = {"sd_model_checkpoint": f"v1-5-pruned-emaonly.ckpt"}
+            
+        img2imgreq.cfg_scale = 11
+        img2imgreq.batch_size = 8
+        img2imgreq.steps = 50
+        img2imgreq.negative_prompt = ""
+        img2imgreq.sampler_index = "Euler a"
+        img2imgreq.denoising_strength = 0.75
+        img2imgreq.subseed = -1
+        img2imgreq.subseed_strength = 1
+        img2imgreq.init_images = [';,' + img2imgreqLab.image]
+        
+        my_hash = str(uuid.uuid4())
+        
+        def temp():
+            images = self.img2imgapi(img2imgreq)
+
+            if not os.path.exists(f'outputs/api_imgs/'):
+                os.makedirs(f'outputs/api_imgs/')
+                
+            with open(f'outputs/api_imgs/{my_hash}.txt', "w") as fp:
+                fp.write('\n'.join(images.images))
+                
+            shared.state.end()
+
+        shared.state.begin(job_name=my_hash)
+        background_tasks.add_task(temp)
+        return ImageToImageLabResponse(job_hash=my_hash, job_no=shared.state.job_no, job_count=shared.state.job_count)
 
     def extras_single_image_api(self, req: ExtrasSingleImageRequest):
         reqDict = setUpscalers(req)
@@ -261,11 +333,11 @@ class Api:
         if info is None:
             raise HTTPException(status_code=404, detail="Checkpoint not found")
 
-        shared.state.begin()
+        # shared.state.begin()
         with self.queue_lock:
             reload_model_weights(shared.sd_model, info)
 
-        shared.state.end()
+        # shared.state.end()
 
         return "OK"
     

@@ -143,6 +143,22 @@ class State:
     textinfo = None
     time_start = None
     need_restart = False
+    
+    def reset(self):
+        self.skipped = False
+        self.interrupted = False
+        self.job = ""
+        self.job_no = 0
+        self.job_count = 0
+        self.job_timestamp = '0'
+        self.sampling_step = 0
+        self.sampling_steps = 0
+        self.current_latent = None
+        self.current_image = None
+        self.current_image_sampling_step = 0
+        self.textinfo = None
+        self.time_start = None
+        self.need_restart = False
 
     def skip(self):
         self.skipped = True
@@ -154,7 +170,7 @@ class State:
         if opts.show_progress_every_n_steps == -1:
             self.do_set_current_image()
 
-        self.job_no += 1
+        # self.job_no += 1
         self.sampling_step = 0
         self.current_image_sampling_step = 0
 
@@ -171,24 +187,27 @@ class State:
 
         return obj
 
-    def begin(self):
-        self.sampling_step = 0
-        self.job_count = -1
-        self.job_no = 0
-        self.job_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        self.current_latent = None
-        self.current_image = None
-        self.current_image_sampling_step = 0
-        self.skipped = False
-        self.interrupted = False
-        self.textinfo = None
-        self.time_start = time.time()
+    def begin(self, job_name=""):
+        self.job = job_name
+        self.job_count += 1
+        if self.job_no == 0:
+            self.sampling_step = 0
+            self.job_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+            self.current_latent = None
+            self.current_image = None
+            self.current_image_sampling_step = 0
+            self.skipped = False
+            self.interrupted = False
+            self.textinfo = None
+            self.time_start = time.time()
 
         devices.torch_gc()
 
     def end(self):
-        self.job = ""
-        self.job_count = 0
+        if self.job_no == self.job_count - 1:
+            self.reset()
+        else:
+            self.job_no += 1
 
         devices.torch_gc()
 

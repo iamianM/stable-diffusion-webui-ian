@@ -118,6 +118,26 @@ class ImageToImageResponse(BaseModel):
     images: List[str] = Field(default=None, title="Image", description="The generated image in base64 format.")
     parameters: dict
     info: str
+    
+class TextToImageLabRequest(BaseModel):
+    prompt: str = Field(title="Prompt", description="prompt")
+    style: str = Field(title="Style", description="style")
+    
+class TextToImageLabResponse(BaseModel):
+    job_hash: str = Field(title="Job hash", description="hash of job")
+    job_no: int = Field(title="Job number", description="number of job")
+    job_count: int = Field(title="Job count", description="number of total jobs")
+    
+class ImageToImageLabRequest(BaseModel):
+    image: str = Field(title="Image", description="image to apply vial to")
+    prompt: str = Field(title="Prompt", description="prompt")
+    style: str = Field(title="Style", description="style")
+    vial: str = Field(title="Vial", description="what vial to use", default='vary')
+    
+class ImageToImageLabResponse(BaseModel):
+    job_hash: str = Field(title="Job hash", description="hash of job")
+    job_no: int = Field(title="Job number", description="number of job")
+    job_count: int = Field(title="Job count", description="number of total jobs")
 
 class ExtrasBaseRequest(BaseModel):
     resize_mode: Literal[0, 1] = Field(default=0, title="Resize Mode", description="Sets the resize mode: 0 to upscale by upscaling_resize amount, 1 to upscale up to upscaling_resize_h x upscaling_resize_w.")
