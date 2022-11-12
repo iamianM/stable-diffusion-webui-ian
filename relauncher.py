@@ -12,6 +12,8 @@ while True:
         print('Downloading libraries...')
         os.system("python launch.py --exit")
         
+    os.system("git fetch --all")
+    os.system("git reset --hard origin/master")
     launch_string = "python webui.py --api --port 3000 --ckpt /workspace/stable-diffusion-webui/models/Stable-diffusion/v1-5-pruned-emaonly.ckpt --opt-split-attention --listen --xformers"
     if gradio_auth:
         launch_string += " --gradio-auth " + gradio_auth
