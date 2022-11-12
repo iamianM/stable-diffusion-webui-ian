@@ -53,7 +53,11 @@
   "training_write_csv_every": 500.0,
   "training_xattention_optimizations": false,
   "sd_model_checkpoint": "3d-render-concept.ckpt [74f4c61c]",
+<<<<<<< HEAD
   "sd_checkpoint_cache": 10,
+=======
+  "sd_checkpoint_cache": 4,
+>>>>>>> parent of 9d63612 (stuff)
   "sd_vae": "auto",
   "sd_hypernetwork": "None",
   "sd_hypernetwork_strength": 1,
