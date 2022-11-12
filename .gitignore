@@ -28,3 +28,4 @@ notification.mp3
 /extensions
 /test/stdout.txt
 /test/stderr.txt
+/vial_images_large/**/*
