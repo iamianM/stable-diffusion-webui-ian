@@ -70,9 +70,6 @@ class Api:
         self.app.add_api_route("/sdapi/v1/artists", self.get_artists, methods=["GET"], response_model=List[ArtistItem])
     
     def text2imgapi(self, txt2imgreq: StableDiffusionTxt2ImgProcessingAPI):
-        if "sd_model_checkpoint" in txt2imgreq.override_settings:
-            self.set_sd_models(LoadModelRequest(name=txt2imgreq.override_settings['sd_model_checkpoint']))
-        
         sampler_index = sampler_to_index(txt2imgreq.sampler_index)
 
         if sampler_index is None:
@@ -114,6 +111,9 @@ class Api:
         txt2imgreq.negative_prompt = ""
         txt2imgreq.sampler_index = "Euler a"
         
+        if "sd_model_checkpoint" in txt2imgreq.override_settings:
+            background_tasks.add_task(lambda: self.set_sd_models(LoadModelRequest(name=txt2imgreq.override_settings['sd_model_checkpoint'])))
+        
         my_hash = str(uuid.uuid4())
         
         def temp():
@@ -129,12 +129,9 @@ class Api:
 
         shared.state.begin(job_name=my_hash)
         background_tasks.add_task(temp)
-        return TextToImageLabResponse(job_hash=my_hash, job_no=shared.state.job_no, job_count=shared.state.job_count)
+        return TextToImageLabResponse(job_hash=my_hash, job_no=shared.state.job_count-1, job_count=shared.state.job_count)
 
     def img2imgapi(self, img2imgreq: StableDiffusionImg2ImgProcessingAPI):
-        if "sd_model_checkpoint" in img2imgreq.override_settings:
-            self.set_sd_models(LoadModelRequest(name=img2imgreq.override_settings['sd_model_checkpoint']))
-            
         sampler_index = sampler_to_index(img2imgreq.sampler_index)
 
         if sampler_index is None:
@@ -200,6 +197,9 @@ class Api:
         img2imgreq.subseed = -1
         img2imgreq.subseed_strength = 1
         img2imgreq.init_images = [';,' + img2imgreqLab.image]
+        
+        if "sd_model_checkpoint" in img2imgreq.override_settings:
+            background_tasks.add_task(lambda: self.set_sd_models(LoadModelRequest(name=img2imgreq.override_settings['sd_model_checkpoint'])))
         
         my_hash = str(uuid.uuid4())
         
@@ -267,8 +267,12 @@ class Api:
             progress += 1 / shared.state.job_count * shared.state.sampling_step / shared.state.sampling_steps
 
         time_since_start = time.time() - shared.state.time_start
-        eta = (time_since_start/progress)
-        eta_relative = eta-time_since_start
+        if req.job_no and req.job_no != -1:
+            end_point = (req.job_no + 1) / shared.state.job_count
+            progress = progress / end_point
+            
+        eta = time_since_start / progress
+        eta_relative = max(0, eta-time_since_start)
 
         progress = min(progress, 1)
 

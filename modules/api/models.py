@@ -181,6 +181,7 @@ class PNGInfoResponse(BaseModel):
 
 class ProgressRequest(BaseModel):
     skip_current_image: bool = Field(default=False, title="Skip current image", description="Skip current image serialization")
+    job_no: int = Field(default=-1, title="Job number", description="Job number to get progress of")
 
 class ProgressResponse(BaseModel):
     progress: float = Field(title="Progress", description="The progress with a range of 0 to 1")
