@@ -188,7 +188,7 @@ class Api:
         else:
             img2imgreq.override_settings = {"sd_model_checkpoint": f"v1-5-pruned-emaonly.ckpt"}
             
-        img2imgreq.cfg_scale = 11
+        img2imgreq.cfg_scale = 17
         img2imgreq.batch_size = 8
         img2imgreq.steps = 50
         img2imgreq.negative_prompt = ""
