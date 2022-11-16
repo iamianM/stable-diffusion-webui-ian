@@ -48,12 +48,12 @@ def wrap_queued_call(func):
 def wrap_gradio_gpu_call(func, extra_outputs=None):
     def f(*args, **kwargs):
 
-        shared.state.begin()
+        # shared.state.begin()
 
         with queue_lock:
             res = func(*args, **kwargs)
 
-        shared.state.end()
+        # shared.state.end()
 
         return res
 
